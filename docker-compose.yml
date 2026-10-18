@@ -1,0 +1,16 @@
+# Local Postgres for development and tests.
+# Start: docker compose up -d
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: remedy
+      POSTGRES_PASSWORD: remedy
+      POSTGRES_DB: remedy
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/create-test-db.sql:/docker-entrypoint-initdb.d/create-test-db.sql:ro
+volumes:
+  pgdata:

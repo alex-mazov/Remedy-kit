@@ -1,0 +1,23 @@
+{
+  "name": "@remedy/server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --env-file-if-exists=../../.env src/main.ts",
+    "start": "tsx src/main.ts",
+    "seed": "tsx --env-file-if-exists=../../.env src/seed.ts"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.5",
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "@remedy/core": "workspace:*",
+    "@remedy/db": "workspace:*",
+    "drizzle-orm": "^0.45.4",
+    "hono": "^4.13.13",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.15"
+  }
+}

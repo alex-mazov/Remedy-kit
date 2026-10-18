@@ -1,0 +1,42 @@
+# Remedy Kit — rules for Claude Code
+
+Home medicine cabinet service. The main channel is MCP: the user's own agent (Claude, ChatGPT) reads and edits their cabinets. A lightweight mobile app (stage 2) handles expiry reminders and quick entry. The service **stores and returns data only** — no medical advice, no contraindications, no symptom lookup.
+
+Specs (living docs, source of truth for scope):
+- Product: https://claude.ai/code/artifact/2b06b902-dcc9-476f-a59a-4662e386cfce
+- Technical: https://claude.ai/code/artifact/63d6c578-4886-45e6-b444-af56887c8de2
+
+## Layout
+
+```
+apps/server      Hono: MCP (/mcp), later REST (/v1) and Better Auth
+packages/core    all domain operations, rules, zod schemas
+packages/db      Drizzle schema + migrations (Postgres)
+packages/gs1     DataMatrix / EAN parsing, shared with the app
+```
+
+## Rules
+
+- **Logic lives only in `packages/core`.** MCP tools and REST handlers are thin adapters: parse input with the core's zod schema, call one core function, format the result.
+- **Every query is scoped to `ctx.userId`.** Never read or write without it.
+- **Every change writes to `action_log`** with one `batchId` per call, so it can be undone.
+- **New operations go to both MCP and REST**, or the PR says why only one.
+- **No personal data in logs:** no medicine names, no IP addresses, no tokens. Log ids and error codes.
+- **Agent-provided names never enter the shared `product` table.** Only app-confirmed data does.
+- **Code reads like JavaScript.** Types come from zod schemas and Drizzle; avoid clever generics and type gymnastics. Comments explain *why*.
+- **Tool descriptions are in English** (models pick tools more reliably); values are in the user's language.
+- Dates are ISO strings `YYYY-MM-DD`. "Today" is computed in the user's time zone (`todayIn`).
+
+## Commands
+
+```
+docker compose up -d        # Postgres (dev + test DBs)
+pnpm install
+pnpm db:migrate             # apply migrations to DATABASE_URL
+pnpm db:seed                # dev user with sample cabinets
+pnpm dev                    # server on :8787
+pnpm typecheck && pnpm test # run before every commit
+pnpm db:generate            # after editing packages/db/src/schema.ts
+```
+
+Tests hit a real Postgres (`DATABASE_URL_TEST`); no DB mocks.
