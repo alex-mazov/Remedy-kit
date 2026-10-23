@@ -4,8 +4,7 @@
  * Usage: pnpm db:seed
  */
 import { addItems, createCabinet, type Ctx } from "@remedy/core";
-import { createDb, user } from "@remedy/db";
-import { eq } from "drizzle-orm";
+import { anonymousUser, createDb, eq, user } from "@remedy/db";
 import { DEV_USER_ID } from "./app.ts";
 
 const url = process.env.DATABASE_URL;
@@ -18,7 +17,7 @@ const { db, close } = createDb(url);
 const ctx: Ctx = { db, userId: DEV_USER_ID, actor: { kind: "app" } };
 
 await db.delete(user).where(eq(user.id, DEV_USER_ID));
-await db.insert(user).values({ id: DEV_USER_ID });
+await db.insert(user).values(anonymousUser(DEV_USER_ID));
 
 await createCabinet(ctx, { name: "Дом" });
 await createCabinet(ctx, { name: "Машина" });

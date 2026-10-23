@@ -2,11 +2,11 @@
  * Database schema. One Postgres database per region; nothing here links
  * a medicine to a real person, only to a random user id.
  *
- * The `user` table is minimal for now: Better Auth (stage 0, part 2) will
- * add its own columns and tables for sessions, passkeys and OAuth.
+ * Better Auth's own tables (sessions, passkeys, OAuth) are in ./auth-schema.ts.
  */
 import { sql } from "drizzle-orm";
 import {
+  boolean,
   date,
   index,
   integer,
@@ -28,6 +28,13 @@ const updatedAt = () =>
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
+  // Required by Better Auth. Accounts are anonymous: `email` is a placeholder
+  // on the reserved .invalid TLD and `name` is a generic label, never real data.
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  emailVerified: boolean("email_verified").notNull().default(false),
+  image: text("image"),
+  isAnonymous: boolean("is_anonymous").default(false),
   region: text("region").notNull().default("default"),
   /** Warn this many days before an expiry date. */
   notifyDays: integer("notify_days").notNull().default(30),

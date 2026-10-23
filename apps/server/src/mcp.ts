@@ -55,8 +55,14 @@ async function run(fn: () => Promise<unknown>): Promise<CallToolResult> {
   }
 }
 
+const READ_ONLY: CallToolResult = {
+  isError: true,
+  content: [{ type: "text", text: "The user granted read-only access. Ask them to reconnect with permission to make changes." }],
+};
+
 /** Builds an MCP server bound to one user. Created per request (stateless transport). */
-export function createMcpServer(ctx: Ctx): McpServer {
+export function createMcpServer(ctx: Ctx, access: { canWrite: boolean }): McpServer {
+  const write = (fn: () => Promise<unknown>) => (access.canWrite ? run(fn) : Promise.resolve(READ_ONLY));
   const server = new McpServer({ name: "remedy-kit", version: "0.1.0" }, { instructions: INSTRUCTIONS });
 
   server.registerTool(
@@ -113,7 +119,7 @@ export function createMcpServer(ctx: Ctx): McpServer {
       inputSchema: CreateCabinetInput,
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
-    (args) => run(() => createCabinet(ctx, args)),
+    (args) => write(() => createCabinet(ctx, args)),
   );
 
   server.registerTool(
@@ -127,7 +133,7 @@ export function createMcpServer(ctx: Ctx): McpServer {
       inputSchema: AddItemsInput,
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
-    (args) => run(() => addItems(ctx, args)),
+    (args) => write(() => addItems(ctx, args)),
   );
 
   return server;
