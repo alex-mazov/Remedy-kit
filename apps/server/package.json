@@ -9,11 +9,18 @@
     "seed": "tsx --env-file-if-exists=../../.env src/seed.ts"
   },
   "dependencies": {
+    "@better-auth/cimd": "1.7.12",
+    "@better-auth/drizzle-adapter": "1.7.12",
+    "@better-auth/mcp": "1.7.12",
+    "@better-auth/oauth-provider": "1.7.12",
+    "@better-auth/passkey": "1.7.12",
     "@hono/node-server": "^2.1.5",
     "@modelcontextprotocol/sdk": "^1.32.1",
     "@remedy/core": "workspace:*",
     "@remedy/db": "workspace:*",
-    "drizzle-orm": "^0.45.4",
+    "@simplewebauthn/browser": "^14.0.0",
+    "better-auth": "1.7.12",
+    "esbuild": "^0.28.2",
     "hono": "^4.13.13",
     "zod": "^4.6.7"
   },

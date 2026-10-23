@@ -1,4 +1,4 @@
-import { createDb, product, user, type Db } from "@remedy/db";
+import { anonymousUser, createDb, product, user, type Db } from "@remedy/db";
 import { runMigrations } from "@remedy/db/migrate";
 import type { Ctx } from "../src/index.ts";
 
@@ -18,7 +18,7 @@ export async function setupTestDb(): Promise<{ db: Db; close: () => Promise<void
   await db.delete(user);
   await db.delete(product);
   const userId = "test-user";
-  await db.insert(user).values({ id: userId, timezone: "Asia/Almaty", notifyDays: 30 });
+  await db.insert(user).values({ ...anonymousUser(userId), timezone: "Asia/Almaty", notifyDays: 30 });
   // Fixed "now": 2026-10-19 10:00 in Almaty.
   const now = new Date("2026-10-19T05:00:00Z");
   return {

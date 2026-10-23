@@ -1,4 +1,4 @@
-import { actionLog, user } from "@remedy/db";
+import { actionLog, anonymousUser, user } from "@remedy/db";
 import { GS } from "@remedy/gs1";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
@@ -116,7 +116,7 @@ describe("addItems", () => {
 
   it("never touches another user's data", async () => {
     await addItems(env.app, { cabinet: "Дом", items: [{ name: "Секретное лекарство" }] });
-    await env.db.insert(user).values({ id: "someone-else" });
+    await env.db.insert(user).values(anonymousUser("someone-else"));
     const other: Ctx = { ...env.agent, userId: "someone-else" };
     expect(await searchItems(other, { query: "Секретное" })).toEqual([]);
     await expect(addItems(other, { cabinet: "Дом", items: [{ name: "x" }] })).rejects.toMatchObject({ code: "not_found" });

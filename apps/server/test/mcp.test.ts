@@ -6,11 +6,12 @@ import { serve, type ServerType } from "@hono/node-server";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { createCabinet } from "@remedy/core";
-import { createDb, product, user, type Db } from "@remedy/db";
+import { anonymousUser, createDb, product, user, type Db } from "@remedy/db";
 import { runMigrations } from "@remedy/db/migrate";
 import type { AddressInfo } from "node:net";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createApp, DEV_USER_ID } from "../src/app.ts";
+import { createAuth } from "../src/auth.ts";
 
 const DB_URL = process.env.DATABASE_URL_TEST ?? "postgres://remedy:remedy@localhost:5432/remedy_test";
 const TOKEN = "test-token";
@@ -37,7 +38,10 @@ function json(result: Awaited<ReturnType<Client["callTool"]>>): any {
 beforeAll(async () => {
   await runMigrations(DB_URL);
   ({ db, close: closeDb } = createDb(DB_URL));
-  server = serve({ fetch: createApp({ db, devBearerToken: TOKEN }).fetch, port: 0 });
+  const publicUrl = "http://localhost:8787";
+  const secret = "test-secret-test-secret-test-secret-123";
+  const auth = createAuth({ db, publicUrl, secret });
+  server = serve({ fetch: createApp({ db, auth, publicUrl, secret, devBearerToken: TOKEN }).fetch, port: 0 });
   await new Promise((r) => server.once("listening", r));
   baseUrl = `http://localhost:${(server.address() as AddressInfo).port}`;
 });
@@ -50,7 +54,7 @@ afterAll(async () => {
 beforeEach(async () => {
   await db.delete(user);
   await db.delete(product);
-  await db.insert(user).values({ id: DEV_USER_ID });
+  await db.insert(user).values(anonymousUser(DEV_USER_ID));
   await createCabinet({ db, userId: DEV_USER_ID, actor: { kind: "app" } }, { name: "Дом" });
 });
 
@@ -58,7 +62,7 @@ describe("MCP server", () => {
   it("rejects requests without a valid token", async () => {
     const res = await fetch(`${baseUrl}/mcp`, { method: "POST", headers: { authorization: "Bearer wrong" } });
     expect(res.status).toBe(401);
-    expect(res.headers.get("www-authenticate")).toMatch(/^Bearer/);
+    expect(res.headers.get("www-authenticate")).toMatch(/^Bearer resource_metadata=/);
   });
 
   it("exposes the stage 0 tools with read-only hints on readers", async () => {

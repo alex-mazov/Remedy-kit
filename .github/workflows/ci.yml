@@ -33,4 +33,6 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
+      # Chromium for the end-to-end OAuth test (virtual passkey authenticator).
+      - run: pnpm exec playwright-core install --with-deps chromium
       - run: pnpm test
